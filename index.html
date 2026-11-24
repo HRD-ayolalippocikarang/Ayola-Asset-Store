@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AYOLA LIPPO CIKARANG – Asset & Store</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+<style>
+:root{--p:#164B3A;--s:#267A5A;--a:#65C6A8;--bg:#F7F9F7;--card:#fff;--t:#26332D;--t2:#7A8780;--w:#F2B544;--d:#DC5B5B}
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--t)}
+.logo{max-height:44px;max-width:100%;object-fit:contain}
+#app{display:flex;min-height:100vh}
+aside{width:250px;background:var(--p);color:#fff;padding:14px;overflow:auto;transition:.2s;flex-shrink:0}
+aside .brand{background:#fff;border-radius:14px;padding:8px;text-align:center;margin-bottom:12px;color:var(--p);font-weight:700}
+aside h6{margin:16px 8px 4px;font-size:11px;letter-spacing:.1em;color:var(--a)}
+aside a{display:block;color:#fff;text-decoration:none;padding:9px 12px;border-radius:12px;font-size:14px;transition:.15s}
+aside a:hover,aside a.on{background:var(--s)}
+main{flex:1;min-width:0}header{display:flex;gap:10px;align-items:center;padding:10px 18px;background:#fff;border-bottom:1px solid #e5ebe7;position:sticky;top:0;z-index:5}
+header input{flex:1;max-width:340px}#c{padding:18px}
+.card{background:var(--card);border-radius:16px;padding:16px;box-shadow:0 1px 6px #0001;margin-bottom:16px}
+.grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}
+.stat b{font-size:26px;color:var(--p);display:block}.stat span{color:var(--t2);font-size:13px}
+input,select,textarea{padding:10px 12px;border:1px solid #d5dfd9;border-radius:12px;font:inherit;width:100%;background:#fff}
+label{font-size:13px;color:var(--t2);display:block;margin-bottom:4px}
+.f{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+button,.btn{background:var(--s);color:#fff;border:0;border-radius:12px;padding:10px 16px;font:inherit;cursor:pointer;transition:.15s;text-decoration:none;display:inline-block}
+button:hover{background:var(--p)}.ghost{background:#e8f3ee;color:var(--p)}.red{background:var(--d)}.amber{background:var(--w);color:#333}
+table{width:100%;border-collapse:collapse;font-size:14px}th,td{text-align:left;padding:9px 8px;border-bottom:1px solid #edf1ee}th{color:var(--t2);font-weight:600}
+.tw{overflow-x:auto}.thumb{width:42px;height:42px;border-radius:10px;object-fit:cover;background:#e8f3ee}
+.badge{padding:3px 10px;border-radius:99px;font-size:12px;color:#fff;background:var(--s)}.b-y{background:var(--w);color:#333}.b-r{background:var(--d)}
+.bar{height:10px;background:var(--a);border-radius:6px}.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+#toast{position:fixed;right:16px;bottom:16px;z-index:99}#toast div{padding:12px 18px;border-radius:12px;color:#fff;margin-top:8px;background:var(--s)}#toast .e{background:var(--d)}
+.big{width:100%;max-width:420px;border-radius:16px}
+#login{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--p),var(--s) 60%,var(--a));padding:16px}
+#login .card{width:100%;max-width:380px;padding:28px}
+@media(max-width:800px){aside{position:fixed;z-index:20;height:100%;left:-260px}aside.open{left:0}}
+@media print{aside,header{display:none}}
+</style></head><body>
+<div id="root"></div><div id="toast"></div>
+<script>
+// ===== CONFIG: paste your Apps Script Web App URL, put your logo next to this file as logo.png =====
+const API='const API='https://script.google.com/macros/s/AKfycbyLUYA2qlpyCbSu2ANLHZ-vJyVySVcANZ5BN_A40DbmdOLsI1wqzcAt3NH9HmnpU_E6/exec';
+const LOGO='logo.png';
+const ROLES={SuperAdmin:['*'],Admin:['asset','store','master','view'],AssetStaff:['asset','view'],StoreStaff:['store','view'],Viewer:['view']};
+const $=s=>document.querySelector(s);
+const esc=v=>String(v??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const st=sessionStorage.token?sessionStorage:localStorage;
+let S={token:st.token||'',user:JSON.parse(st.user||'null')};
+const can=a=>S.user&&(ROLES[S.user.role].includes('*')||ROLES[S.user.role].includes(a));
+const toast=(m,e)=>{const d=document.createElement('div');d.textContent=m;if(e)d.className='e';$('#toast').append(d);setTimeout(()=>d.remove(),3500)};
+const logoImg=`<img class="logo" src="${LOGO}" alt="AYOLA LIPPO CIKARANG" onerror="this.outerHTML='<b>AYOLA LIPPO CIKARANG</b>'">`;
+async function api(action,data={}){
+  if(API.includes('PASTE'))throw new Error('Set API URL in index.html');
+  const r=await fetch(API,{method:'POST',body:JSON.stringify({action,token:S.token,...data})}).then(r=>r.json());
+  if(!r.ok){if(r.error==='SESSION_EXPIRED')logout(true);throw new Error(r.error)}return r.data}
+const list=n=>api('list',{sheet:n});
+function logout(silent){if(!silent&&S.token)api('logout').catch(()=>{});localStorage.clear();sessionStorage.clear();S={token:'',user:null};boot()}
+const uid=()=>crypto.randomUUID();
+const fmt=d=>d?new Date(d).toLocaleString('en-GB'):'';
+const money=n=>'Rp '+Number(n||0).toLocaleString('id-ID');
+
+// ===== LOGIN =====
+function loginView(){$('#root').innerHTML=`<div id="login"><div class="card"><div style="text-align:center;margin-bottom:18px">${logoImg}</div>
+<h3 style="margin:0 0 14px;color:var(--p)">Sign in</h3>
+<label>Username</label><input id="u" autocomplete="username"><br><br>
+<label>Password</label><input id="pw" type="password" autocomplete="current-password">
+<div class="row" style="margin:10px 0"><label><input type="checkbox" id="sp" style="width:auto"> Show</label><label><input type="checkbox" id="rm" style="width:auto"> Remember me</label></div>
+<button style="width:100%" id="go">Login</button>
+<p style="font-size:12px;color:var(--t2)">Forgot password? Ask a Super Admin to reset it in User Management.</p></div></div>`;
+$('#sp').onchange=e=>$('#pw').type=e.target.checked?'text':'password';
+const go=async()=>{try{const r=await api('login',{username:$('#u').value,password:$('#pw').value});
+ const store=$('#rm').checked?localStorage:sessionStorage;store.token=r.token;store.user=JSON.stringify(r.user);location.hash='#/';location.reload()}catch(e){toast(e.message,1)}};
+$('#go').onclick=go;$('#pw').onkeydown=e=>e.key==='Enter'&&go()}
+
+// ===== SHELL =====
+const NAV=[['DASHBOARD',[['#/','Dashboard','view']]],
+['ASSET MANAGEMENT',[['#/assets/dash','Asset Dashboard','view'],['#/assets/new','Asset Registration','asset'],['#/assets','Asset List','view'],['#/scan/asset','QR Scanner','view'],['#/movement','Asset Movement','asset'],['#/maint','Maintenance History','view']]],
+['STORE MANAGEMENT',[['#/store/dash','Store Dashboard','view'],['#/products/new','Product Registration','store'],['#/products','Product List','view'],['#/scan/product','QR Scanner','view'],['#/stock/IN','Stock In','store'],['#/stock/OUT','Stock Out','store'],['#/card','Digital Bin Card','view']]],
+['MASTER DATA',[['#/m/Asset_Categories','Asset Categories','master'],['#/m/Product_Categories','Product Categories','master'],['#/m/Departments','Departments','master'],['#/m/Locations','Locations','master'],['#/m/Suppliers','Suppliers','master']]],
+['SYSTEM',[['#/users','User Management','*'],['#/logs','Activity Logs','*']]]];
+function shell(){$('#root').innerHTML=`<div id="app"><aside id="sb"><div class="brand">${logoImg}</div>
+${NAV.map(([g,items])=>{const v=items.filter(i=>i[2]==='*'?S.user.role==='SuperAdmin':can(i[2]));return v.length?`<h6>${g}</h6>`+v.map(i=>`<a href="${i[0]}" data-h="${i[0]}">${i[1]}</a>`).join(''):''}).join('')}
+<h6>ACCOUNT</h6><a href="#" id="lo">Logout (${esc(S.user.name)})</a></aside>
+<main><header><button class="ghost" id="mb">☰</button><input id="gs" placeholder="Search ID or name…"><span style="flex:1"></span><span id="bell" title="Notifications">🔔</span><small>${esc(S.user.role)}</small></header><div id="c"></div></main></div>`;
+$('#mb').onclick=()=>$('#sb').classList.toggle('open');$('#lo').onclick=e=>{e.preventDefault();logout()};
+$('#gs').onkeydown=async e=>{if(e.key!=='Enter')return;const q=e.target.value.trim().toLowerCase();if(!q)return;
+ const [a,p]=await Promise.all([list('Assets'),list('Products')]);
+ const x=a.find(r=>r.id.toLowerCase()===q||r.name.toLowerCase().includes(q));if(x)return location.hash='#/asset/'+x.id;
+ const y=p.find(r=>r.id.toLowerCase()===q||r.name.toLowerCase().includes(q));y?location.hash='#/product/'+y.id:toast('Nothing found',1)};
+list('Products').then(p=>{const n=p.filter(x=>+x.stock<=+x.min).length;$('#bell').textContent='🔔'+(n?` ${n} low/out of stock`:'')}).catch(()=>{})}
+
+// ===== helpers =====
+function table(cols,rows,opts={}){return `<div class="tw"><table><thead><tr>${cols.map(c=>`<th>${c[0]}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr>${cols.map(c=>`<td>${c[1](r)}</td>`).join('')}</tr>`).join('')||'<tr><td colspan=99>No data</td></tr>'}</tbody></table></div>`}
+function csv(name,cols,rows){const t=[cols.map(c=>c[0]).join(',')].concat(rows.map(r=>cols.map(c=>'"'+String(c[2]?c[2](r):r[c[3]]??'').replace(/"/g,'""')+'"').join(','))).join('\n');
+ const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type:'text/csv'}));a.download=name+'.csv';a.click()}
+function qrData(text){const d=document.createElement('div');new QRCode(d,{text,width:256,height:256,correctLevel:QRCode.CorrectLevel.H});const c=d.querySelector('canvas');return c.toDataURL('image/png')}
+const qrText=id=>location.href.split('#')[0]+'#/s/'+id;
+function printLabels(items){const w=window.open('','_blank');w.document.write(`<html><body style="font-family:sans-serif;display:flex;flex-wrap:wrap;gap:8px">${items.map(i=>`<div style="border:1px solid #000;padding:8px;width:200px;text-align:center;page-break-inside:avoid"><img src="${qrData(qrText(i.id))}" width=160><div><b>${esc(i.id)}</b></div><div style="font-size:12px">${esc(i.name)}</div><div style="font-size:10px">AYOLA LIPPO CIKARANG</div></div>`).join('')}<script>onload=()=>print()<\/script></body></html>`);w.document.close()}
+function dlQR(id){const a=document.createElement('a');a.href=qrData(qrText(id));a.download=id+'.png';a.click()}
+const stockBadge=p=>+p.stock<=0?'<span class="badge b-r">Out of stock</span>':+p.stock<=+p.min?'<span class="badge b-y">Low</span>':'<span class="badge">Normal</span>';
+const img=u=>u?`<img class="thumb" src="${esc(u)}" loading="lazy">`:'<div class="thumb"></div>';
+function compress(file){return new Promise(res=>{const r=new FileReader();r.onload=()=>{const i=new Image();i.onload=()=>{const k=Math.min(1,900/Math.max(i.width,i.height)),c=document.createElement('canvas');c.width=i.width*k;c.height=i.height*k;c.getContext('2d').drawImage(i,0,0,c.width,c.height);res(c.toDataURL('image/jpeg',.8))};i.src=r.result};r.readAsDataURL(file)})}
+
+// ===== generic form =====
+async function formView(sheet,fields,rec,back){
+  const sel={};for(const f of fields)if(f[2]==='sel'&&typeof f[3]==='string')sel[f[3]]=(await list(f[3])).map(x=>x.name);
+  const opt=f=>Array.isArray(f[3])?f[3]:sel[f[3]]||[];
+  $('#c').innerHTML=`<div class="card"><h3>${rec.id?'Edit '+rec.id:'New record'}</h3><div class="f">${fields.map(f=>`<div><label>${f[1]}${f[4]?' *':''}</label>${f[2]==='sel'?`<select data-k="${f[0]}"><option value="">-</option>${opt(f).map(o=>`<option ${rec[f[0]]==o?'selected':''}>${esc(o)}</option>`).join('')}</select>`:f[2]==='area'?`<textarea data-k="${f[0]}">${esc(rec[f[0]])}</textarea>`:`<input data-k="${f[0]}" type="${f[2]}" value="${esc(f[2]==='date'?String(rec[f[0]]||'').slice(0,10):rec[f[0]])}">`}</div>`).join('')}
+<div><label>Photo (camera or file)</label><input type="file" id="ph" accept="image/*" capture="environment"></div></div><br><div class="row"><button id="sv">Save</button><a class="btn ghost" href="${back}">Cancel</a></div></div>`;
+  $('#sv').onclick=async()=>{const r={...rec};document.querySelectorAll('[data-k]').forEach(e=>r[e.dataset.k]=e.value);
+   for(const f of fields)if(f[4]&&!r[f[0]])return toast(f[1]+' is required',1);
+   if($('#ph')&&$('#ph').files[0])r.imageData=await compress($('#ph').files[0]);
+   try{const id=await api('save',{sheet,rec:r});toast('Saved '+id);location.hash=sheet==='Assets'?'#/asset/'+id:'#/product/'+id}catch(e){toast(e.message,1)}}}
+const AF=[['name','Asset Name','text',0,1],['category','Category','sel','Asset_Categories'],['description','Description','text'],['brand','Brand','text'],['model','Model','text'],['serial','Serial Number','text'],['purchaseDate','Purchase Date','date'],['price','Purchase Price','number'],['supplier','Supplier','sel','Suppliers'],['department','Department','sel','Departments'],['location','Location','sel','Locations'],['responsible','Responsible Person','text'],['condition','Condition','sel',['Good','Fair','Poor','Damaged']],['status','Status','sel',['Active','Inactive','Maintenance','Damaged','Missing']],['warranty','Warranty Expiry','date'],['notes','Notes','area']];
+const PF=[['name','Product Name','text',0,1],['category','Category','sel','Product_Categories'],['description','Description','text'],['brand','Brand','text'],['unit','Unit','sel',['Pcs','Box','Pack','Kg','Liter','Roll','Set']],['min','Minimum Stock','number'],['max','Maximum Stock','number'],['stock','Opening Stock (new only)','number'],['location','Storage Location','text'],['supplier','Supplier','sel','Suppliers'],['price','Unit Price','number'],['status','Status','sel',['Active','Inactive']],['notes','Notes','area']];
+
+// ===== views =====
+const V={};
+V['']=async()=>{const [a,p]=await Promise.all([list('Assets'),list('Products')]);
+ $('#c').innerHTML=`<div class="grid"><div class="card stat"><b>${a.length}</b><span>Total assets</span></div><div class="card stat"><b>${p.length}</b><span>Total products</span></div><div class="card stat"><b>${p.filter(x=>+x.stock<=+x.min&&+x.stock>0).length}</b><span>Low stock</span></div><div class="card stat"><b>${p.filter(x=>+x.stock<=0).length}</b><span>Out of stock</span></div></div>
+ <div class="row"><a class="btn" href="#/scan/asset">Scan asset</a><a class="btn" href="#/scan/product">Scan product</a></div>`};
+const countBy=(arr,k)=>Object.entries(arr.reduce((o,x)=>(o[x[k]||'—']=(o[x[k]||'—']||0)+1,o),{}));
+const bars=e=>{const m=Math.max(1,...e.map(x=>x[1]));return e.map(([k,v])=>`<div style="margin:6px 0"><small>${esc(k)} (${v})</small><div class="bar" style="width:${v/m*100}%"></div></div>`).join('')||'No data'};
+V['assets/dash']=async()=>{const a=await list('Assets'),c=s=>a.filter(x=>x.status===s).length;
+ $('#c').innerHTML=`<div class="grid">${[['Total',a.length],['Active',c('Active')],['Inactive',c('Inactive')],['Maintenance',c('Maintenance')],['Damaged',c('Damaged')],['Missing',c('Missing')]].map(x=>`<div class="card stat"><b>${x[1]}</b><span>${x[0]}</span></div>`).join('')}</div>
+ <div class="grid"><div class="card"><h4>By department</h4>${bars(countBy(a,'department'))}</div><div class="card"><h4>By category</h4>${bars(countBy(a,'category'))}</div><div class="card"><h4>By condition</h4>${bars(countBy(a,'condition'))}</div></div>
+ <div class="card"><h4>Recently updated</h4>${table([['Asset',r=>`<a href="#/asset/${r.id}">${esc(r.id)} ${esc(r.name)}</a>`],['Updated',r=>fmt(r.updatedAt)]],[...a].sort((x,y)=>String(y.updatedAt).localeCompare(x.updatedAt)).slice(0,6))}</div>`};
+V['assets/new']=()=>formView('Assets',AF,{status:'Active',condition:'Good'},'#/assets');
+V['assets']=async()=>listView('Assets','Asset List',await list('Assets'),[['',r=>img(r.imageUrl),r=>r.imageUrl],['ID',r=>`<a href="#/asset/${r.id}">${r.id}</a>`,0,'id'],['Name',r=>esc(r.name),0,'name'],['Category',r=>esc(r.category),0,'category'],['Department',r=>esc(r.department),0,'department'],['Location',r=>esc(r.location),0,'location'],['Condition',r=>esc(r.condition),0,'condition'],['Status',r=>esc(r.status),0,'status']],'#/assets/new','asset');
+V['products']=async()=>listView('Products','Product List',await list('Products'),[['',r=>img(r.imageUrl),r=>r.imageUrl],['ID',r=>`<a href="#/product/${r.id}">${r.id}</a>`,0,'id'],['Name',r=>esc(r.name),0,'name'],['Category',r=>esc(r.category),0,'category'],['Unit',r=>esc(r.unit),0,'unit'],['Stock',r=>r.stock,0,'stock'],['Min',r=>r.min,0,'min'],['Location',r=>esc(r.location),0,'location'],['State',stockBadge,r=>+r.stock<=0?'Out':+r.stock<=+r.min?'Low':'Normal']],'#/products/new','store');
+let PAGE=0;
+function listView(sheet,title,data,cols,addHref,area){
+ const draw=()=>{const q=($('#q')?.value||'').toLowerCase(),rows=data.filter(r=>JSON.stringify(r).toLowerCase().includes(q)),per=15,pages=Math.ceil(rows.length/per)||1;PAGE=Math.min(PAGE,pages-1);
+  $('#tb').innerHTML=table(cols,rows.slice(PAGE*per,PAGE*per+per))+`<div class="row" style="margin-top:10px"><button class="ghost" id="pv">‹</button> ${PAGE+1}/${pages} <button class="ghost" id="nx">›</button> <button class="ghost" id="ex">Export CSV</button> <button class="ghost" id="pl">Print QR labels</button> <button class="ghost" onclick="print()">Print list</button></div>`;
+  $('#pv').onclick=()=>{PAGE=Math.max(0,PAGE-1);draw()};$('#nx').onclick=()=>{PAGE++;draw()};$('#ex').onclick=()=>csv(sheet,cols.filter(c=>c[0]),rows);$('#pl').onclick=()=>printLabels(rows)};
+ $('#c').innerHTML=`<div class="card"><div class="row"><h3 style="margin:0;flex:1">${title}</h3>${can(area)?`<a class="btn" href="${addHref}">+ New</a>`:''}</div><br><input id="q" placeholder="Search / filter…"><br><br><div id="tb"></div></div>`;
+ PAGE=0;$('#q').oninput=()=>{PAGE=0;draw()};draw()}
+V['asset']=async id=>{const a=(await list('Assets')).find(x=>x.id===id);if(!a)return $('#c').innerHTML='Not found';
+ const mv=(await list('Asset_Movements')).filter(x=>x.assetId===id).reverse();
+ $('#c').innerHTML=`<div class="card"><div class="row" style="align-items:flex-start"><div style="flex:1;min-width:260px">${a.imageUrl?`<img class="big" src="${esc(a.imageUrl)}">`:'<p>No image</p>'}</div>
+ <div style="flex:1;min-width:260px"><h2 style="margin:0">${esc(a.name)}</h2><p>${a.id} · ${esc(a.status)} · ${esc(a.condition)}</p>${AF.filter(f=>f[0]!=='name').map(f=>`<div><small>${f[1]}</small>: ${esc(a[f[0]])}</div>`).join('')}<div><small>Last updated</small>: ${fmt(a.updatedAt)} by ${esc(a.updatedBy)}</div></div>
+ <div style="text-align:center"><img id="qi" src="${qrData(qrText(id))}" width=180><br><button class="ghost" onclick="dlQR('${id}')">PNG</button> <button class="ghost" onclick='printLabels([{id:"${id}",name:${JSON.stringify(a.name)}}])'>Print / PDF</button></div></div>
+ <div class="row" style="margin-top:12px">${can('asset')?`<a class="btn" href="#/assets/edit/${id}">Edit</a><a class="btn ghost" href="#/movement/${id}">Record movement</a><a class="btn amber" href="#/movement/${id}/Damage Report">Report damage</a><a class="btn ghost" href="#/movement/${id}/Maintenance">Maintenance</a>`:''}</div></div>
+ <div class="card"><h4>History</h4>${table([['Date',r=>fmt(r.date)],['Type',r=>esc(r.type)],['Location',r=>esc(r.prevLocation)+' → '+esc(r.newLocation)],['Responsible',r=>esc(r.prevResponsible)+' → '+esc(r.newResponsible)],['By',r=>esc(r.by)],['Notes',r=>esc(r.notes)]],mv)}</div>`};
+V['assets/edit']=async id=>formView('Assets',AF,(await list('Assets')).find(x=>x.id===id),'#/asset/'+id);
+V['products/new']=()=>formView('Products',PF,{status:'Active',unit:'Pcs'},'#/products');
+V['products/edit']=async id=>formView('Products',PF.filter(f=>f[0]!=='stock'),(await list('Products')).find(x=>x.id===id),'#/product/'+id);
+V['product']=async id=>{const p=(await list('Products')).find(x=>x.id===id);if(!p)return $('#c').innerHTML='Not found';
+ $('#c').innerHTML=`<div class="card"><div class="row" style="align-items:flex-start"><div style="flex:1;min-width:260px">${p.imageUrl?`<img class="big" src="${esc(p.imageUrl)}">`:'<p>No image</p>'}</div>
+ <div style="flex:1;min-width:260px"><h2 style="margin:0">${esc(p.name)}</h2><p>${p.id} ${stockBadge(p)}</p><h1 style="margin:0;color:var(--p)">${p.stock} <small>${esc(p.unit)}</small></h1>${PF.filter(f=>!['name','stock'].includes(f[0])).map(f=>`<div><small>${f[1]}</small>: ${esc(p[f[0]])}</div>`).join('')}</div>
+ <div style="text-align:center"><img src="${qrData(qrText(id))}" width=180><br><button class="ghost" onclick="dlQR('${id}')">PNG</button> <button class="ghost" onclick='printLabels([{id:"${id}",name:${JSON.stringify(p.name)}}])'>Print / PDF</button></div></div>
+ <div class="row" style="margin-top:12px">${can('store')?`<a class="btn" href="#/stock/IN/${id}">STOCK IN</a><a class="btn amber" href="#/stock/OUT/${id}">STOCK OUT</a><a class="btn ghost" href="#/products/edit/${id}">Edit</a>`:''}<a class="btn ghost" href="#/card/${id}">Bin card</a></div></div>`};
+V['store/dash']=async()=>{const [p,t]=await Promise.all([list('Products'),list('Stock_Transactions')]);
+ const val=p.reduce((s,x)=>s+x.stock*x.price,0),mon=k=>{const o={};t.filter(x=>x.type===k).forEach(x=>{const m=String(x.date).slice(0,7);o[m]=(o[m]||0)+Number(x.qty)});return Object.entries(o).sort()};
+ const top={};t.filter(x=>x.type==='OUT').forEach(x=>top[x.productId]=(top[x.productId]||0)+Number(x.qty));
+ $('#c').innerHTML=`<div class="grid">${[['Products',p.length],['Total stock',p.reduce((s,x)=>s+Number(x.stock),0)],['Stock value',money(val)],['Incoming trx',t.filter(x=>x.type==='IN').length],['Outgoing trx',t.filter(x=>x.type==='OUT').length],['Low stock',p.filter(x=>+x.stock>0&&+x.stock<=+x.min).length],['Out of stock',p.filter(x=>+x.stock<=0).length]].map(x=>`<div class="card stat"><b>${x[1]}</b><span>${x[0]}</span></div>`).join('')}</div>
+ <div class="grid"><div class="card"><h4>Stock by category</h4>${bars(Object.entries(p.reduce((o,x)=>(o[x.category||'—']=(o[x.category||'—']||0)+Number(x.stock),o),{})))}</div><div class="card"><h4>Monthly incoming</h4>${bars(mon('IN'))}</div><div class="card"><h4>Monthly outgoing</h4>${bars(mon('OUT'))}</div><div class="card"><h4>Top moving</h4>${bars(Object.entries(top).sort((a,b)=>b[1]-a[1]).slice(0,5))}</div></div>
+ <div class="card"><h4>Low stock monitoring</h4>${table([['Product',r=>`<a href="#/product/${r.id}">${esc(r.name)}</a>`],['Stock',r=>r.stock+' / min '+r.min],['',stockBadge]],p.filter(x=>+x.stock<=+x.min))}</div>
+ <div class="card"><h4>Recent transactions</h4>${table([['Date',r=>fmt(r.date)],['Trx',r=>r.id],['Product',r=>r.productId],['Type',r=>r.type],['Qty',r=>r.qty],['Balance',r=>r.balance],['By',r=>esc(r.by)]],[...t].reverse().slice(0,8))}</div>`};
+V['assets/dash']=V['assets/dash'];
+V['scan']=async mode=>{let facing='environment',qr;
+ $('#c').innerHTML=`<div class="card"><h3>${mode==='asset'?'Asset':'Product'} QR Scanner</h3><div id="reader" style="max-width:420px"></div><div class="row" style="margin:10px 0"><button id="sw" class="ghost">Switch camera</button></div>
+ <div class="row"><input id="mi" placeholder="Manual ID e.g. ${mode==='asset'?'AST':'PRD'}-000001" style="max-width:260px"><button id="mg">Find</button></div></div><div id="res"></div>`;
+ const show=async txt=>{const m=/(AST|PRD)-\d{6}/.exec(txt);if(!m)return toast('Not a valid code',1);if(qr)try{await qr.stop()}catch(e){}
+  const asset=m[1]==='AST',r=(await list(asset?'Assets':'Products')).find(x=>x.id===m[0]);if(!r)return toast('Not found',1);
+  $('#res').innerHTML=`<div class="card"><div class="row">${img(r.imageUrl)}<div style="flex:1"><b>${r.id} – ${esc(r.name)}</b><br><small>${esc(r.category)} · ${esc(r.location)} ${asset?`· ${esc(r.department)} · ${esc(r.responsible)} · ${esc(r.condition)}/${esc(r.status)} · updated ${fmt(r.updatedAt)}`:`· ${esc(r.unit)} · stock ${r.stock} (min ${r.min}) ${''}`}</small></div>${asset?'':stockBadge(r)}</div><br>
+  <div class="row"><a class="btn ghost" href="#/${asset?'asset':'product'}/${r.id}">View detail</a>${asset?(can('asset')?`<a class="btn ghost" href="#/assets/edit/${r.id}">Edit</a><a class="btn ghost" href="#/movement/${r.id}">Movement</a><a class="btn amber" href="#/movement/${r.id}/Damage Report">Report damage</a>`:''):(can('store')?`<a class="btn" href="#/stock/IN/${r.id}">STOCK IN</a><a class="btn amber" href="#/stock/OUT/${r.id}">STOCK OUT</a>`:'')}<a class="btn ghost" href="#/${asset?'asset':'card'}/${r.id}">History</a></div></div>`};
+ const start=async()=>{try{qr=new Html5Qrcode('reader');await qr.start({facingMode:facing},{fps:10,qrbox:240},show,()=>{})}catch(e){toast('Camera unavailable: '+e,1)}};
+ $('#sw').onclick=async()=>{try{await qr.stop()}catch(e){}facing=facing==='environment'?'user':'environment';start()};
+ $('#mg').onclick=()=>show($('#mi').value.toUpperCase());start()};
+V['movement']=async(id,type)=>{const [a,l]=await Promise.all([list('Assets'),list('Locations')]);
+ $('#c').innerHTML=`<div class="card"><h3>Asset Movement / Status</h3><div class="f"><div><label>Asset</label><select id="a">${a.map(x=>`<option value="${x.id}" ${x.id===id?'selected':''}>${x.id} – ${esc(x.name)}</option>`).join('')}</select></div>
+ <div><label>Type</label><select id="t">${['Transfer','Return','Maintenance','Damage Report','Status Update'].map(x=>`<option ${x===type?'selected':''}>${x}</option>`).join('')}</select></div>
+ <div><label>New location</label><select id="l"><option value="">(unchanged)</option>${l.map(x=>`<option>${esc(x.name)}</option>`).join('')}</select></div><div><label>New responsible</label><input id="r"></div>
+ <div><label>Condition</label><select id="cd"><option value="">(unchanged)</option><option>Good</option><option>Fair</option><option>Poor</option><option>Damaged</option></select></div>
+ <div><label>Status</label><select id="s"><option value="">(unchanged)</option><option>Active</option><option>Inactive</option><option>Maintenance</option><option>Damaged</option><option>Missing</option></select></div><div><label>Notes</label><textarea id="n"></textarea></div></div><br><button id="sv">Save</button></div>`;
+ $('#sv').onclick=async()=>{try{await api('move',{assetId:$('#a').value,type:$('#t').value,newLocation:$('#l').value,newResponsible:$('#r').value,condition:$('#cd').value,status:$('#s').value,notes:$('#n').value});toast('Recorded');location.hash='#/asset/'+$('#a').value}catch(e){toast(e.message,1)}}};
+V['maint']=async()=>{const m=await list('Asset_Maintenance');$('#c').innerHTML=`<div class="card"><h3>Maintenance & Damage History</h3>${table([['Date',r=>fmt(r.date)],['Asset',r=>`<a href="#/asset/${r.assetId}">${r.assetId}</a>`],['Type',r=>esc(r.type)],['By',r=>esc(r.by)],['Notes',r=>esc(r.notes)]],[...m].reverse())}</div>`};
+V['stock']=async(kind,pid)=>{const [p,d,s]=await Promise.all([list('Products'),list('Departments'),list('Suppliers')]),IN=kind==='IN',rid=uid();
+ $('#c').innerHTML=`<div class="card"><h3>Stock ${IN?'In':'Out'}</h3><div class="row"><a class="btn ghost" href="#/scan/product">Scan product QR</a></div><br><div class="f"><div><label>Product</label><select id="p">${p.map(x=>`<option value="${x.id}" ${x.id===pid?'selected':''}>${x.id} – ${esc(x.name)}</option>`).join('')}</select><small id="av"></small></div>
+ <div><label>Quantity ${IN?'received':'issued'}</label><input id="q" type="number" min="1"></div>
+ <div><label>${IN?'Supplier':'Department'}</label><select id="y">${(IN?s:d).map(x=>`<option>${esc(x.name)}</option>`).join('')}</select></div>
+ <div><label>${IN?'PO / Reference':'Reference'}</label><input id="rf"></div><div><label>${IN?'Received by':'Requested by'}</label><input id="rb"></div><div><label>Notes</label><textarea id="n"></textarea></div></div><br><button id="sv" class="${IN?'':'amber'}">Save transaction</button><p><small>Date/time and user are recorded automatically.</small></p></div>`;
+ const av=()=>{const x=p.find(y=>y.id===$('#p').value);$('#av').textContent=x?`Current stock: ${x.stock} ${x.unit}`:''};$('#p').onchange=av;av();
+ $('#sv').onclick=async()=>{try{const r=await api('stock',{requestId:rid,productId:$('#p').value,kind,qty:$('#q').value,party:$('#y').value,ref:$('#rf').value,notes:($('#rb').value?'By '+$('#rb').value+'. ':'')+$('#n').value});toast('Saved. Balance: '+r.balance);location.hash='#/card/'+$('#p').value}catch(e){toast(e.message,1)}}};
+V['card']=async pid=>{const [p,c]=await Promise.all([list('Products'),list('Stock_Card')]);
+ const draw=()=>{const id=$('#p').value,rows=c.filter(x=>x.productId===id),x=p.find(y=>y.id===id);
+  $('#t').innerHTML=`<h4>${x?esc(x.name)+' ('+x.id+') – '+stockBadge(x):''}</h4>`+table([['Date',r=>fmt(r.date)],['Transaction ID',r=>r.trxId],['Description',r=>esc(r.description)],['Stock In',r=>r.stockIn],['Stock Out',r=>r.stockOut],['Balance',r=>`<b>${r.balance}</b>`],['User',r=>esc(r.user)]],rows)+`<br><div class="row"><button class="ghost" id="ex">Export CSV</button><button class="ghost" onclick="print()">Print / PDF</button></div>`;
+  $('#ex').onclick=()=>csv('bincard_'+id,[['Date',0,r=>r.date],['Trx',0,r=>r.trxId],['Description',0,r=>r.description],['In',0,r=>r.stockIn],['Out',0,r=>r.stockOut],['Balance',0,r=>r.balance],['User',0,r=>r.user]],rows)};
+ $('#c').innerHTML=`<div class="card"><h3>Digital Bin Card</h3><select id="p">${p.map(x=>`<option value="${x.id}" ${x.id===pid?'selected':''}>${x.id} – ${esc(x.name)}</option>`).join('')}</select><br><br><div id="t"></div></div>`;$('#p').onchange=draw;draw()};
+V['m']=async sheet=>{const d=await list(sheet);
+ $('#c').innerHTML=`<div class="card"><h3>${sheet.replace('_',' ')}</h3><div class="row"><input id="nm" placeholder="New name" style="max-width:260px"><button id="ad">Add</button></div><br>${table([['ID',r=>r.id],['Name',r=>`<input value="${esc(r.name)}" data-id="${r.id}" class="ed">`],['',r=>`<button class="red" data-del="${r.id}">Delete</button>`]],d)}</div>`;
+ $('#ad').onclick=async()=>{try{await api('save',{sheet,rec:{name:$('#nm').value}});route()}catch(e){toast(e.message,1)}};
+ document.querySelectorAll('.ed').forEach(i=>i.onchange=async()=>{try{await api('save',{sheet,rec:{id:i.dataset.id,name:i.value}});toast('Updated')}catch(e){toast(e.message,1)}});
+ document.querySelectorAll('[data-del]').forEach(b=>b.onclick=async()=>{if(confirm('Delete this record?')){try{await api('delete',{sheet,id:b.dataset.del});route()}catch(e){toast(e.message,1)}}})};
+V['users']=async()=>{const u=await list('Users');
+ $('#c').innerHTML=`<div class="card"><h3>User Management</h3><div class="f"><input id="nn" placeholder="Full name"><input id="nu" placeholder="Username"><input id="np" type="password" placeholder="Password (min 8)"><select id="nr">${Object.keys(ROLES).map(r=>`<option>${r}</option>`).join('')}</select></div><br><button id="ad">Add user</button></div>
+ <div class="card">${table([['User',r=>esc(r.username)+' – '+esc(r.name)],['Role',r=>`<select data-r="${r.id}" data-n="${esc(r.name)}">${Object.keys(ROLES).map(x=>`<option ${x===r.role?'selected':''}>${x}</option>`).join('')}</select>`],['Active',r=>r.active===true||r.active==='TRUE'?'Yes':'No'],['Password',r=>`<button class="ghost" data-pw="${r.id}" data-n="${esc(r.name)}" data-ro="${r.role}">Reset</button>`]],u)}</div>`;
+ $('#ad').onclick=async()=>{try{await api('save',{sheet:'Users',rec:{name:$('#nn').value,username:$('#nu').value,password:$('#np').value,role:$('#nr').value}});route()}catch(e){toast(e.message,1)}};
+ document.querySelectorAll('[data-r]').forEach(s=>s.onchange=async()=>{try{await api('save',{sheet:'Users',rec:{id:s.dataset.r,name:s.dataset.n,role:s.value}});toast('Role updated')}catch(e){toast(e.message,1)}});
+ document.querySelectorAll('[data-pw]').forEach(b=>b.onclick=async()=>{const p=prompt('New password (min 8 chars)');if(p)try{await api('save',{sheet:'Users',rec:{id:b.dataset.pw,name:b.dataset.n,role:b.dataset.ro,password:p}});toast('Password reset')}catch(e){toast(e.message,1)}})};
+V['logs']=async()=>{const l=await list('Audit_Logs');$('#c').innerHTML=`<div class="card"><h3>Activity Logs</h3>${table([['Date',r=>fmt(r.date)],['User',r=>esc(r.user)],['Action',r=>esc(r.action)],['Detail',r=>esc(r.detail)]],[...l].reverse().slice(0,200))}</div>`};
+
+async function route(){if(!S.user)return;const h=location.hash.replace(/^#\/?/,''),parts=h.split('/').map(decodeURIComponent);
+ let key=parts[0],args=parts.slice(1);
+ if(key==='s'){location.hash=(args[0].startsWith('AST')?'#/asset/':'#/product/')+args[0];return}
+ if(['assets','products','store'].includes(key)&&args[0]&&V[key+'/'+args[0]]){key+='/'+args.shift()}
+ document.querySelectorAll('aside a').forEach(a=>a.classList.toggle('on',a.dataset.h==='#/'+h));$('#sb')?.classList.remove('open');
+ $('#c').innerHTML='<p>Loading…</p>';try{await (V[key]||V[''])(...args)}catch(e){$('#c').innerHTML=`<div class="card">${esc(e.message)}</div>`}}
+function boot(){if(!S.token||!S.user)return loginView();shell();route()}
+addEventListener('hashchange',route);boot();
+</script></body></html>

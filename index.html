@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html lang="en"><head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light only">
 <title>AYOLA LIPPO CIKARANG – Asset & Store</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
 <style>
-:root{--p:#164B3A;--s:#267A5A;--a:#65C6A8;--bg:#F7F9F7;--card:#fff;--t:#26332D;--t2:#7A8780;--w:#F2B544;--d:#DC5B5B}
+:root{color-scheme:light;--p:#164B3A;--s:#267A5A;--a:#65C6A8;--bg:#F7F9F7;--card:#fff;--t:#26332D;--t2:#7A8780;--w:#F2B544;--d:#DC5B5B}
 *{box-sizing:border-box}body{margin:0;font-family:system-ui,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--t)}
 .logo{max-height:44px;max-width:100%;object-fit:contain}
 #app{display:flex;min-height:100vh}
@@ -19,7 +19,7 @@ header input{flex:1;max-width:340px}#c{padding:18px}
 .card{background:var(--card);border-radius:16px;padding:16px;box-shadow:0 1px 6px #0001;margin-bottom:16px}
 .grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}
 .stat b{font-size:26px;color:var(--p);display:block}.stat span{color:var(--t2);font-size:13px}
-input,select,textarea{padding:10px 12px;border:1px solid #d5dfd9;border-radius:12px;font:inherit;width:100%;background:#fff}
+input,select,textarea{color:#26332D;-webkit-text-fill-color:#26332D;caret-color:#164B3A;color-scheme:light;padding:10px 12px;border:1px solid #d5dfd9;border-radius:12px;font:inherit;width:100%;background:#fff}
 label{font-size:13px;color:var(--t2);display:block;margin-bottom:4px}
 .f{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
 button,.btn{background:var(--s);color:#fff;border:0;border-radius:12px;padding:10px 16px;font:inherit;cursor:pointer;transition:.15s;text-decoration:none;display:inline-block}
@@ -38,13 +38,15 @@ table{width:100%;border-collapse:collapse;font-size:14px}th,td{text-align:left;p
 <div id="root"></div><div id="toast"></div>
 <script>
 // ===== CONFIG: paste your Apps Script Web App URL, put your logo next to this file as logo.png =====
-const API='https://script.google.com/macros/s/AKfycbyLUYA2qlpyCbSu2ANLHZ-vJyVySVcANZ5BN_A40DbmdOLsI1wqzcAt3NH9HmnpU_E6/exec';
+const API='https://script.google.com/macros/s/AKfycbz_zPK701xW0vV0Kb-a-znl8C4Jg_AG-mD-1GpD4f53baSsiVaTRaAtaayDZ9N9mKpc/exec';
 const LOGO='logo.png';
+// true = langsung masuk tanpa halaman login (pasangkan dengan OPEN_MODE=true di Apps Script). Ubah ke false untuk mengaktifkan login lagi.
+const SKIP_LOGIN=true;
 const ROLES={SuperAdmin:['*'],Admin:['asset','store','master','view'],AssetStaff:['asset','view'],StoreStaff:['store','view'],Viewer:['view']};
 const $=s=>document.querySelector(s);
 const esc=v=>String(v??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const st=sessionStorage.token?sessionStorage:localStorage;
-let S={token:st.token||'',user:JSON.parse(st.user||'null')};
+let S=SKIP_LOGIN?{token:'open',user:{id:'USR-OPEN',name:'Admin',username:'admin',role:'SuperAdmin'}}:{token:st.token||'',user:JSON.parse(st.user||'null')};
 const can=a=>S.user&&(ROLES[S.user.role].includes('*')||ROLES[S.user.role].includes(a));
 const toast=(m,e)=>{const d=document.createElement('div');d.textContent=m;if(e)d.className='e';$('#toast').append(d);setTimeout(()=>d.remove(),3500)};
 const logoImg=`<img class="logo" src="${LOGO}" alt="AYOLA LIPPO CIKARANG" onerror="this.outerHTML='<b>AYOLA LIPPO CIKARANG</b>'">`;
@@ -53,7 +55,7 @@ async function api(action,data={}){
   const r=await fetch(API,{method:'POST',body:JSON.stringify({action,token:S.token,...data})}).then(r=>r.json());
   if(!r.ok){if(r.error==='SESSION_EXPIRED')logout(true);throw new Error(r.error)}return r.data}
 const list=n=>api('list',{sheet:n});
-function logout(silent){if(!silent&&S.token)api('logout').catch(()=>{});localStorage.clear();sessionStorage.clear();S={token:'',user:null};boot()}
+function logout(silent){if(SKIP_LOGIN)return;if(!silent&&S.token)api('logout').catch(()=>{});localStorage.clear();sessionStorage.clear();S={token:'',user:null};boot()}
 const uid=()=>crypto.randomUUID();
 const fmt=d=>d?new Date(d).toLocaleString('en-GB'):'';
 const money=n=>'Rp '+Number(n||0).toLocaleString('id-ID');
@@ -62,11 +64,11 @@ const money=n=>'Rp '+Number(n||0).toLocaleString('id-ID');
 function loginView(){$('#root').innerHTML=`<div id="login"><div class="card"><div style="text-align:center;margin-bottom:18px">${logoImg}</div>
 <h3 style="margin:0 0 14px;color:var(--p)">Sign in</h3>
 <label>Username</label><input id="u" autocomplete="username"><br><br>
-<label>Password</label><input id="pw" type="password" autocomplete="current-password">
-<div class="row" style="margin:10px 0"><label><input type="checkbox" id="sp" style="width:auto"> Show</label><label><input type="checkbox" id="rm" style="width:auto"> Remember me</label></div>
+<label>Password</label><div style="position:relative"><input id="pw" type="password" autocomplete="current-password" style="padding-right:64px"><button type="button" id="eye" class="ghost" style="position:absolute;right:4px;top:4px;padding:6px 10px">Lihat</button></div>
+<div class="row" style="margin:10px 0"><label><input type="checkbox" id="rm" style="width:auto"> Remember me</label></div>
 <button style="width:100%" id="go">Login</button>
 <p style="font-size:12px;color:var(--t2)">Forgot password? Ask a Super Admin to reset it in User Management.</p></div></div>`;
-$('#sp').onchange=e=>$('#pw').type=e.target.checked?'text':'password';
+$('#eye').onclick=()=>{const p=$('#pw'),h=p.type==='password';p.type=h?'text':'password';$('#eye').textContent=h?'Sembunyi':'Lihat'};
 const go=async()=>{try{const r=await api('login',{username:$('#u').value,password:$('#pw').value});
  const store=$('#rm').checked?localStorage:sessionStorage;store.token=r.token;store.user=JSON.stringify(r.user);location.hash='#/';location.reload()}catch(e){toast(e.message,1)}};
 $('#go').onclick=go;$('#pw').onkeydown=e=>e.key==='Enter'&&go()}
@@ -79,7 +81,7 @@ const NAV=[['DASHBOARD',[['#/','Dashboard','view']]],
 ['SYSTEM',[['#/users','User Management','*'],['#/logs','Activity Logs','*']]]];
 function shell(){$('#root').innerHTML=`<div id="app"><aside id="sb"><div class="brand">${logoImg}</div>
 ${NAV.map(([g,items])=>{const v=items.filter(i=>i[2]==='*'?S.user.role==='SuperAdmin':can(i[2]));return v.length?`<h6>${g}</h6>`+v.map(i=>`<a href="${i[0]}" data-h="${i[0]}">${i[1]}</a>`).join(''):''}).join('')}
-<h6>ACCOUNT</h6><a href="#" id="lo">Logout (${esc(S.user.name)})</a></aside>
+<h6>ACCOUNT</h6><a href="#" id="lo">${SKIP_LOGIN?'Mode tanpa login':'Logout ('+esc(S.user.name)+')'}</a></aside>
 <main><header><button class="ghost" id="mb">☰</button><input id="gs" placeholder="Search ID or name…"><span style="flex:1"></span><span id="bell" title="Notifications">🔔</span><small>${esc(S.user.role)}</small></header><div id="c"></div></main></div>`;
 $('#mb').onclick=()=>$('#sb').classList.toggle('open');$('#lo').onclick=e=>{e.preventDefault();logout()};
 $('#gs').onkeydown=async e=>{if(e.key!=='Enter')return;const q=e.target.value.trim().toLowerCase();if(!q)return;
